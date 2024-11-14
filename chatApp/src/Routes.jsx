@@ -4,6 +4,9 @@ import { UserContext } from "./UserContext";
 
 const Routes = () => {
   const { username, id } = useContext(UserContext);
+  if (username) {
+    return "loggedIn " + username;
+  }
   return <RegisterAndLoginForm />;
 };
 
