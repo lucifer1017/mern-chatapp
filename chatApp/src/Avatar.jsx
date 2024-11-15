@@ -17,7 +17,7 @@ const Avatar = ({ userId, username }) => {
   return (
     <div className={"w-8 h-8 relative rounded-full flex items-center " + color}>
       <div className="items-center text-center w-full opacity-70 font-semibold ">
-        {username[0]}
+        {username[0] !== undefined ? username[0] : "hey"}
       </div>
     </div>
   );

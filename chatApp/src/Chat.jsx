@@ -8,6 +8,8 @@ const Chat = () => {
   const [onlinePeople, setOnlinePeople] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
   const { username, id } = useContext(UserContext);
+  const [newMessageText, setNewMessageText] = useState("");
+  const [messages, setMessages] = useState([]);
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:8000");
     setWs(ws);
@@ -24,7 +26,23 @@ const Chat = () => {
     const messageData = JSON.parse(e.data);
     if ("online" in messageData) {
       showOnlinePeople(messageData.online);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        { text: messageData.text, isOur: false },
+      ]);
     }
+  };
+  const sendMessage = (e) => {
+    e.preventDefault();
+    ws.send(
+      JSON.stringify({
+        recipient: selectedUserId,
+        text: newMessageText,
+      })
+    );
+    setNewMessageText("");
+    setMessages((prev) => [...prev, { text: newMessageText, isOur: true }]);
   };
   const onlinePeopleExcludingOurUser = { ...onlinePeople };
   delete onlinePeopleExcludingOurUser[id];
@@ -33,7 +51,7 @@ const Chat = () => {
       <div className="bg-gray-100 w-1/3 pl-3 pt-3 ">
         <Logo />
 
-        {Object.keys(onlinePeopleExcludingOurUser).map((userId) => (
+        {Object.keys(onlinePeople).map((userId) => (
           <div
             onClick={() => setSelectedUserId(userId)}
             className={
@@ -62,30 +80,44 @@ const Chat = () => {
               </div>
             </div>
           )}
+          {!!selectedUserId && (
+            <div>
+              {messages.map((message) => (
+                <div>{message.text}</div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="flex gap-2 mx-2">
-          <input
-            type="text"
-            placeholder="Type here"
-            className="bg-white p-2 flex-grow border rounded-md shadow-md"
-          />
-          <button className="bg-blue-400 p-2 text-white rounded-md">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="size-6"
+        {!!selectedUserId && (
+          <form className="flex gap-2 mx-2" onSubmit={sendMessage}>
+            <input
+              type="text"
+              value={newMessageText}
+              onChange={(e) => setNewMessageText(e.target.value)}
+              placeholder="Type here"
+              className="bg-white p-2 flex-grow border rounded-md shadow-md"
+            />
+            <button
+              type="submit"
+              className="bg-blue-400 p-2 text-white rounded-md"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
-              />
-            </svg>
-          </button>
-        </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="size-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
+                />
+              </svg>
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
